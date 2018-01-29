@@ -57,7 +57,7 @@ def open_socket(IP, PORT):
 
 def read_socket(s):
     msg = ''
-#    print(s)
+    #    print(s)
     try:
         msg = s.recv(1024)
     except socket.timeout as e:
@@ -71,16 +71,16 @@ def read_socket(s):
         print('no message available')
     return msg
 
-           # 'demost_horloge\n'
-           # 'demost_horloge\n' \
+    # 'demost_kmr\n' \
+    # 'demost_kmr\n' \
 
 def start_kogame():
     tempfile = "C:/C3_HMI/cmmComm/tempfile.txt"
     askfile = "C:/C3_HMI/cmmComm/remote.ask"
     text = 'EXECUTE_PATH_PART_PROGRAM\n' \
            'C:\MCOSMOS\DATA\n' \
-           'demost_dummy\n' \
-           'demost_horloge\n' \
+           'demost_kmr\n' \
+           'demost_kmr\n' \
            '0\n' \
            '0\n' \
            '0\n' \

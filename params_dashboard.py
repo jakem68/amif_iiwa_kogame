@@ -90,7 +90,7 @@ def get_ip():
     return (ip)
 
 
-def main():
+def run():
     while True:
         values = read_file()
         ip_addr = get_ip()
@@ -99,6 +99,8 @@ def main():
         dweepy.dweet_for('kogame_iiwa', values)
         time.sleep(30)
 
+def main():
+    run()
 
 if __name__ == "__main__":
     main()

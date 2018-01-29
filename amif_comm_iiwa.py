@@ -10,6 +10,8 @@ import socket
 import sys
 import time
 import log
+import threading
+import params_dashboard
 
 print(sys.version)
 
@@ -22,6 +24,9 @@ IP_IIWA = '10.32.3.193'
 
 start_kogame_var = b'(3)/n'
 send_status_kogame = b'(1)/n'
+continue_kogame_var = b'(5)/n'
+
+
 ready = b'100'
 busy = b'102'
 finished = b'103'
@@ -31,6 +36,8 @@ msg_file = "C:/C3_HMI/cmmComm/remote.msg"
 ans_file = "C:/C3_HMI/cmmComm/remote.ans"
 commfiles = [ask_file, ans_file, msg_file]
 ans_file_found = False
+clicked_continue = False
+
 
 def open_socket(IP, PORT):
     max_retries = 3
@@ -61,7 +68,7 @@ def open_socket(IP, PORT):
 
 def read_socket(s):
     msg = ''
-#    print(s)
+    #    print(s)
     try:
         msg = s.recv(1024)
     except socket.timeout as e:
@@ -75,17 +82,28 @@ def read_socket(s):
         print('no message available')
     return msg
 
-           # 'demost_horloge\n' \
-           # 'demost_horloge\n' \
+    # 'demost_horloge\n' \
+    # 'demost_horloge\n' \
 
+    # 'jtekt_16-3067\n' \
+    # 'PG\n' \
 
+    # 'demost_kmr\n' \
+    # 'demost_kmr\n' \
+
+# added this dummy function to replace real one below for safety reasons
+def start_kogame():
+    time.sleep(1)
+    pass
+
+'''
 def start_kogame():
     tempfile = "C:/C3_HMI/cmmComm/tempfile.txt"
     askfile = "C:/C3_HMI/cmmComm/remote.ask"
     text = 'EXECUTE_PATH_PART_PROGRAM\n' \
            'C:\MCOSMOS\DATA\n' \
-           'demost_horloge\n' \
-           'demost_horloge\n' \
+           'jtekt_16-3067\n' \
+           'PG\n' \
            '0\n' \
            '0\n' \
            '0\n' \
@@ -106,7 +124,7 @@ def start_kogame():
     except:
         print('could not rename tempfile to askfile')
         pass
-
+'''
 
 def clear_cmmComm():
     for file in commfiles:
@@ -134,20 +152,17 @@ def monitor_kogame():
             elif file == msg_file:
                 file_found = True
                 try:
-                    remove_msg_file = False
                     with open(file) as f:
                         msg_firstline = f.readline()
                         if msg_firstline == 'PPERR\n':
                             kogame_status = busy
                         elif msg_firstline == 'PPEND\n':
                             kogame_status = ready
-                            remove_msg_file = True
-                    if remove_msg_file:
-                        os.remove(file)
-                        ans_file_found = False
-                        print(msg_firstline)
-                        # enter line for log command
-                        logger.log_entry(log_file)
+                    os.remove(file)
+                    ans_file_found = False
+                    print(msg_firstline)
+                    # enter line for log command
+                    logger.log_entry(log_file)
                 except:
                     print('could not read remote.msg file')
                     kogame_status = busy
@@ -158,7 +173,11 @@ def monitor_kogame():
     return kogame_status
 
 
-# clear_cmmComm()
+clear_cmmComm()
+
+thread1 = threading.Thread(target=params_dashboard.run, args=[])
+thread1.start()
+
 status_kogame = monitor_kogame()
 
 iiwa_socket_connection = False
@@ -172,18 +191,32 @@ iiwa_socket.settimeout(2)
 status_kogame = monitor_kogame()
 iiwa_socket.send(status_kogame)
 
+'''
+Added click to ba able to start Kogame program and wait at programmable stop, then click 'ok' to continue 
+in the program. Goal was to save time otherwise lost waiting for Kogame to start.
+'''
+import win32api, win32con
+def click(x,y):
+    win32api.SetCursorPos((x,y))
+    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,x,y,0,0)
+    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,x,y,0,0)
+
+
 while True:
     iiwa_msg = read_socket(iiwa_socket)
-    time.sleep(1)
+    time.sleep(0.25)
     if iiwa_msg == start_kogame_var:
         if monitor_kogame() == ready:
-            status_kogame = busy
+            # status_kogame = busy
             start_kogame()
             iiwa_socket.send(status_kogame)
         else:
             status_kogame = monitor_kogame()
             print(status_kogame)
             iiwa_socket.send(status_kogame)
+    elif iiwa_msg == continue_kogame_var:
+        # click(1360,910)
+        click(1090,590)
     else:
         status_kogame = monitor_kogame()
         print(status_kogame)
